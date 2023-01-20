@@ -1,0 +1,47 @@
+version: '1'
+
+services:
+
+  api-rest:
+    build: .
+    ports:
+      - 4000:4000
+    expose:
+      - 4000
+    volumes:
+      - ./index.js:/home/app/index.js
+      - ./Routes:/home/app/Routes
+    command: "nodemon --legacy-watch index.js" 
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:5.7
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
+    volumes:
+      - ./sqlinit/:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=1234
+      - MYSQL_DATABASE=facturaciondb
+      - MYSQL_ROOT_HOST=%
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+
+
+  phpamdin:
+    image: phpmyadmin:5.2
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db
+      - PMA_PORTS=3306
